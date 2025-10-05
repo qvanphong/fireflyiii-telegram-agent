@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  firefly-iii-mcp:
+    image: fireflyiii-mcp:latest
+    container_name: firefly-iii-mcp
+    environment:
+      - FIREFLY_III_BASE_URL=
+      - FIREFLY_III_PAT=
+      - FIREFLY_III_PRESET=basic
+      - FIREFLY_III_TOOLS=accounts,transactions,categories
+    networks:
+      - firefly-iii-network
+  telegram-bot:
+    image: fireflyiii-agent-telegram:latest
+    container_name: firefly-telegram-bot
+    environment:
+      - TELEGRAM_BOT_USERNAME=
+      - TELEGRAM_BOT_TOKEN=
+      - TELEGRAM_BOT_OWNER_ID=
+      - OPENAI_API_KEY=
+      - FIREFLY_MCP_URL=http://firefly-iii-mcp:3000
+    restart: unless-stopped
+    depends_on:
+    - firefly-iii-mcp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - firefly-iii-network
+
+
+networks:
+  firefly-iii-network:
+    driver: bridge
