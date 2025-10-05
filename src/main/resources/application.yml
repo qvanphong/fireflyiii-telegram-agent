@@ -1,0 +1,31 @@
+spring:
+  ai:
+    openai:
+      base-url: ${OPENAI_URL:https://openrouter.ai/api}
+      api-key: ${OPENAI_API_KEY:your_api_key}
+      chat:
+        options:
+          temperature: 0.1
+          model: ${OPENAI_MODEL:x-ai/grok-4-fast}
+    mcp:
+      client:
+        toolcallback:
+          enabled: true
+        sse:
+          connections:
+            firefly-iii:
+              url: ${FIREFLY_MCP_URL:http://localhost:3001}
+              sse-endpoint: "/sse"
+
+telegram:
+  bot:
+    username: ${TELEGRAM_BOT_USERNAME:bot_username}
+    token: ${TELEGRAM_BOT_TOKEN:bot_token}
+    ownerId: ${TELEGRAM_BOT_OWNER_ID:0000000}
+
+server:
+  port: 8085
+
+logging:
+  level:
+    com.qvanphong.fireflyagent: DEBUG

@@ -1,0 +1,13 @@
+# Use Node.js LTS (Long Term Support) version
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install npm packages globally to avoid permission issues
+# and ensure the package is available system-wide
+RUN npm install -g @firefly-iii-mcp/server
+
+# Set the entrypoint to run the server using npx
+EXPOSE 3000
+ENTRYPOINT ["npx", "@firefly-iii-mcp/server"]
