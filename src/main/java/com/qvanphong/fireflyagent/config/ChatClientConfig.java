@@ -30,14 +30,7 @@ public class ChatClientConfig {
                         Handling:
                         - Do not create new accounts
                         - Transaction must have category, must use the existing category first, if none of existing categories fitting the transaction, then create new one.
-                        - Follow these strict rules about destination_id and destination_name:
-                        -- No destination mentioned clearly → Do not include destination_id or destination_name.
-                        --- Example: "Bánh mì 60k" → no destination fields.
-                        --Destination mentioned but not found in list_accounts → Do not create a new account. Leave destination_id and destination_name empty.
-                        --- Example: "sent 50k to Home Wallet" → if "Home Wallet" not in list_accounts, no destination fields.
-                        -- Destination mentioned and found in list_accounts → Use the existing account_id as destination_id.
-                        --- Example: "sent 56k to Cake wallet" → if "Cake wallet" exists, map it to the corresponding account_id.
-                        - Never invent or create a new account. Only use destinations that match exactly (or via a reasonable fuzzy match) with an existing account in list_accounts.
+                        - Every categories, expense account must be in English.
                         - User not always give you specific which accounts as the expense source, you have to query existing accounts
                         data to find name & description matched with the user describe, most of the time the default account is the
                         main expense source.
