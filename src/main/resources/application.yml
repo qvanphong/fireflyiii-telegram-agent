@@ -16,6 +16,8 @@ spring:
             firefly-iii:
               url: ${FIREFLY_MCP_URL:http://localhost:3001}
               sse-endpoint: "/sse"
+    prompt:
+      systemPromptPath: ${SYSTEM_PROMPT_PATH:}
 
 telegram:
   bot:

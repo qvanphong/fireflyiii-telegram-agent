@@ -5,10 +5,13 @@ import com.qvanphong.fireflyagent.pojo.CompletionInfo;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -47,46 +50,54 @@ public class AgentTelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && !update.getMessage().getFrom().getId().equals(ownerId)) {
             return;
         }
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
-            Long chatId = update.getMessage().getChatId();
-            String userName = update.getMessage().getFrom().getFirstName();
+        if (!update.hasMessage() || !update.getMessage().hasText()) {
+            return;
+        }
 
-            log.info("Received message from {}: {}", userName, messageText);
-            sendProcessing(chatId);
+        String messageText = update.getMessage().getText();
+        Long chatId = update.getMessage().getChatId();
+        String userName = update.getMessage().getFrom().getFirstName();
 
-            CompletionInfo completion = llmChatClient.chat(messageText);
-            StringBuilder responseBuilder = new StringBuilder();
-            if (completion.hasToolCalled()) {
-                responseBuilder.append("⚙️ Tools called: \n");
-                for (String toolCall : completion.getToolsCalled()) {
-                    responseBuilder.append("- ").append(toolCall).append("\n");
-                }
+        log.info("Received message from {}: {}", userName, messageText);
+        Integer msgId = sendProcessing(chatId);
+
+        CompletionInfo completion = llmChatClient.completion(messageText);
+        StringBuilder responseBuilder = new StringBuilder();
+
+        responseBuilder.append("🤖: ").append(completion.getResponseMessage());
+        responseBuilder.append("\n\n");
+        if (completion.hasToolCalled()) {
+            responseBuilder.append("⚙️ Tools called: \n");
+            for (AssistantMessage.ToolCall toolCall : completion.getToolsCalled()) {
+                responseBuilder.append("- ").append(toolCall.name()).append("\n");
             }
-            responseBuilder.append("🤖: ").append(completion.getResponseMessage());
+        }
 
-            SendMessage responseMessage = new SendMessage();
-            responseMessage.setChatId(chatId.toString());
-            responseMessage.setText(responseBuilder.toString());
+        EditMessageText editMessageText = EditMessageText.builder()
+                .chatId(chatId.toString())
+                .messageId(msgId)
+                .text(responseBuilder.toString())
+                .build();
 
-            try {
-                execute(responseMessage);
-                log.info("Reply sent successfully to {}", userName);
-            } catch (TelegramApiException e) {
-                log.error("Error sending message", e);
-            }
+        try {
+            execute(editMessageText);
+            log.info("Reply sent successfully to {}", userName);
+        } catch (TelegramApiException e) {
+            log.error("Error sending message", e);
         }
     }
 
-    private void sendProcessing(Long chatId) {
+    private Integer sendProcessing(Long chatId) {
         SendMessage responseMessage = new SendMessage();
         responseMessage.setChatId(chatId.toString());
-        responseMessage.setText("👍 Processing");
+        responseMessage.setText("🤔 Hmmm....");
 
         try {
-            execute(responseMessage);
+            Message executed = execute(responseMessage);
+            return executed.getMessageId();
         } catch (TelegramApiException e) {
             log.error("Failed to reply Processing to user", e);
         }
+        return null;
     }
 }

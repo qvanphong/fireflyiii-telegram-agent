@@ -10,29 +10,25 @@ import java.util.List;
 
 public class CompletionInfo {
     @Getter
-    private List<String> toolsCalled;
+    private List<AssistantMessage.ToolCall> toolsCalled;
 
     @Getter @Setter
     private String responseMessage;
 
-    public void addToolCall(String toolName) {
+
+    public void addToolCalled(Collection<AssistantMessage.ToolCall> tools) {
         if (toolsCalled == null) {
             toolsCalled = new ArrayList<>();
         }
-
-        toolsCalled.add(toolName);
-    }
-
-    public void addToolCall(Collection<AssistantMessage.ToolCall> tools) {
-        if (toolsCalled == null) {
-            toolsCalled = new ArrayList<>();
-        }
-
-        tools.forEach(toolCall -> toolsCalled.add(toolCall.name()));
+        toolsCalled.addAll(tools);
 
     }
 
     public boolean hasToolCalled() {
         return toolsCalled != null;
+    }
+
+    public List<AssistantMessage.ToolCall> getToolsCalled() {
+        return toolsCalled;
     }
 }
