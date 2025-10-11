@@ -8,27 +8,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@Getter
+@Setter
 public class CompletionInfo {
-    @Getter
     private List<AssistantMessage.ToolCall> toolsCalled;
-
-    @Getter @Setter
     private String responseMessage;
-
+    private String error;
+    private boolean isSuccess = true;
 
     public void addToolCalled(Collection<AssistantMessage.ToolCall> tools) {
         if (toolsCalled == null) {
             toolsCalled = new ArrayList<>();
         }
         toolsCalled.addAll(tools);
-
     }
 
     public boolean hasToolCalled() {
         return toolsCalled != null;
-    }
-
-    public List<AssistantMessage.ToolCall> getToolsCalled() {
-        return toolsCalled;
     }
 }

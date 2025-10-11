@@ -37,39 +37,44 @@ public class LlmChatClient {
 
 
     public CompletionInfo completion(String content) {
-        Prompt prompt = builtPrompt(content);
-
-        ChatResponse chatResponse = chatClient
-                .prompt(prompt)
-                .call()
-                .chatResponse();
-
         CompletionInfo completionInfo = new CompletionInfo();
-        while (chatResponse != null && chatResponse.hasToolCalls()) {
-            List<AssistantMessage.ToolCall> toolsCalled = getToolCalls(chatResponse);
-            completionInfo.addToolCalled(toolsCalled);
 
-            ToolExecutionResult toolExecutionResult = toolCallingManager.executeToolCalls(prompt, chatResponse);
-            prompt = new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions());
-
-            chatResponse = chatClient
+        try {
+            Prompt prompt = builtPrompt(content);
+            ChatResponse chatResponse = chatClient
                     .prompt(prompt)
                     .call()
                     .chatResponse();
+
+            while (chatResponse != null && chatResponse.hasToolCalls()) {
+                List<AssistantMessage.ToolCall> toolsCalled = getToolCalls(chatResponse);
+                completionInfo.addToolCalled(toolsCalled);
+
+                ToolExecutionResult toolExecutionResult = toolCallingManager.executeToolCalls(prompt, chatResponse);
+                prompt = new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions());
+
+                chatResponse = chatClient
+                        .prompt(prompt)
+                        .call()
+                        .chatResponse();
+            }
+
+            AssistantMessage assistantMessage = Optional.ofNullable(chatResponse)
+                    .map(ChatResponse::getResult)
+                    .map(Generation::getOutput)
+                    .orElse(AssistantMessage.builder()
+                            .content("ok")
+                            .toolCalls(ObjectUtils.defaultIfNull(completionInfo.getToolsCalled(), Collections.emptyList()))
+                            .build());
+
+            completionInfo.setResponseMessage(assistantMessage.getText());
+
+            chatMemory.add("noop", prompt.getUserMessage());
+            chatMemory.add("noop", assistantMessage);
+        } catch (Exception e) {
+            completionInfo.setSuccess(false);
+            completionInfo.setError(e.getMessage());
         }
-
-        AssistantMessage assistantMessage = Optional.ofNullable(chatResponse)
-                .map(ChatResponse::getResult)
-                .map(Generation::getOutput)
-                .orElse(AssistantMessage.builder()
-                        .content("ok")
-                        .toolCalls(ObjectUtils.defaultIfNull(completionInfo.getToolsCalled(), Collections.emptyList()))
-                        .build());
-
-        completionInfo.setResponseMessage(assistantMessage.getText());
-
-        chatMemory.add("noop", prompt.getUserMessage());
-        chatMemory.add("noop", assistantMessage);
         return completionInfo;
     }
 

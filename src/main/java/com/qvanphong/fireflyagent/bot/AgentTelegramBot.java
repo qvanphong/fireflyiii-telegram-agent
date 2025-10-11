@@ -47,10 +47,7 @@ public class AgentTelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && !update.getMessage().getFrom().getId().equals(ownerId)) {
-            return;
-        }
-        if (!update.hasMessage() || !update.getMessage().hasText()) {
+        if (isNotOwner(update) || hasNoMessage(update)) {
             return;
         }
 
@@ -62,6 +59,25 @@ public class AgentTelegramBot extends TelegramLongPollingBot {
         Integer msgId = sendProcessing(chatId);
 
         CompletionInfo completion = llmChatClient.completion(messageText);
+        String responseText = !completion.isSuccess() ?
+                buildFailResponseMessage(completion) :
+                buildResponseMessage(completion);
+
+        EditMessageText editMessageText = EditMessageText.builder()
+                .chatId(chatId.toString())
+                .messageId(msgId)
+                .text(responseText)
+                .build();
+
+        try {
+            execute(editMessageText);
+            log.info("Reply sent successfully to {}", userName);
+        } catch (TelegramApiException e) {
+            log.error("Error sending message", e);
+        }
+    }
+
+    private String buildResponseMessage(CompletionInfo completion) {
         StringBuilder responseBuilder = new StringBuilder();
 
         responseBuilder.append("🤖: ").append(completion.getResponseMessage());
@@ -72,19 +88,7 @@ public class AgentTelegramBot extends TelegramLongPollingBot {
                 responseBuilder.append("- ").append(toolCall.name()).append("\n");
             }
         }
-
-        EditMessageText editMessageText = EditMessageText.builder()
-                .chatId(chatId.toString())
-                .messageId(msgId)
-                .text(responseBuilder.toString())
-                .build();
-
-        try {
-            execute(editMessageText);
-            log.info("Reply sent successfully to {}", userName);
-        } catch (TelegramApiException e) {
-            log.error("Error sending message", e);
-        }
+        return responseBuilder.toString();
     }
 
     private Integer sendProcessing(Long chatId) {
@@ -99,5 +103,17 @@ public class AgentTelegramBot extends TelegramLongPollingBot {
             log.error("Failed to reply Processing to user", e);
         }
         return null;
+    }
+
+    private String buildFailResponseMessage(CompletionInfo completionInfo) {
+        return "❌ Failed to process, please try again. \nError: %s".formatted(completionInfo.getError());
+    }
+
+    private boolean hasNoMessage(Update update) {
+        return !update.hasMessage() || !update.getMessage().hasText();
+    }
+
+    private boolean isNotOwner(Update update) {
+        return update.hasMessage() && !update.getMessage().getFrom().getId().equals(ownerId);
     }
 }
