@@ -20,6 +20,7 @@ services:
       - TELEGRAM_BOT_OWNER_ID=
       - OPENAI_API_KEY=
       - FIREFLY_MCP_URL=http://firefly-iii-mcp:3000
+      - SYSTEM_PROMPT_PATH=/app/src/main/resources/default_prompt.txt
     restart: unless-stopped
     depends_on:
     - firefly-iii-mcp
