@@ -66,9 +66,6 @@ public class LlmChatClient {
                             .build());
 
             completionInfo.setResponseMessage(assistantMessage.getText());
-
-            chatMemory.add("noop", prompt.getUserMessage());
-            chatMemory.add("noop", assistantMessage);
         } catch (Exception e) {
             completionInfo.setSuccess(false);
             completionInfo.setError(e.getMessage());
