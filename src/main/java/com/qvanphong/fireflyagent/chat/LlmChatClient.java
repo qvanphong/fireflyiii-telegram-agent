@@ -96,6 +96,7 @@ public class LlmChatClient {
 
     private Prompt builtPrompt(String content) {
         ToolCallingChatOptions chatOptions = ToolCallingChatOptions.builder()
+                .temperature(0.4)
                 .internalToolExecutionEnabled(false)
                 .build();
 

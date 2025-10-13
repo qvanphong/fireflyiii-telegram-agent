@@ -5,7 +5,7 @@ spring:
       api-key: ${OPENAI_API_KEY:your_api_key}
       chat:
         options:
-          temperature: 0.1
+          temperature: 0.4
           model: ${OPENAI_MODEL:x-ai/grok-4-fast}
     mcp:
       client:
