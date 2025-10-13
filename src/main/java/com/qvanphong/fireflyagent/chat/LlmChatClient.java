@@ -15,7 +15,6 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
-import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -43,18 +42,17 @@ public class LlmChatClient {
             Prompt prompt = builtPrompt(content);
             ChatResponse chatResponse = chatClient
                     .prompt(prompt)
+                    .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, "noop"))
                     .call()
                     .chatResponse();
 
             while (chatResponse != null && chatResponse.hasToolCalls()) {
                 List<AssistantMessage.ToolCall> toolsCalled = getToolCalls(chatResponse);
                 completionInfo.addToolCalled(toolsCalled);
-
-                ToolExecutionResult toolExecutionResult = toolCallingManager.executeToolCalls(prompt, chatResponse);
-                prompt = new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions());
+                toolCallingManager.executeToolCalls(prompt, chatResponse);
 
                 chatResponse = chatClient
-                        .prompt(prompt)
+                        .prompt()
                         .call()
                         .chatResponse();
             }
@@ -96,8 +94,7 @@ public class LlmChatClient {
 
     private Prompt builtPrompt(String content) {
         ToolCallingChatOptions chatOptions = ToolCallingChatOptions.builder()
-                .temperature(0.4)
-                .internalToolExecutionEnabled(false)
+                .internalToolExecutionEnabled(true)
                 .build();
 
         UserMessage userMessage = new UserMessage(content);

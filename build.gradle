@@ -33,7 +33,7 @@ repositories {
 }
 
 ext {
-    springAiVersion = '1.1.0-M2'
+    springAiVersion = '1.1.0-M3'
 }
 
 dependencies {
