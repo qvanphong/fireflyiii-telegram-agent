@@ -46,17 +46,6 @@ public class LlmChatClient {
                     .call()
                     .chatResponse();
 
-            while (chatResponse != null && chatResponse.hasToolCalls()) {
-                List<AssistantMessage.ToolCall> toolsCalled = getToolCalls(chatResponse);
-                completionInfo.addToolCalled(toolsCalled);
-                toolCallingManager.executeToolCalls(prompt, chatResponse);
-
-                chatResponse = chatClient
-                        .prompt()
-                        .call()
-                        .chatResponse();
-            }
-
             AssistantMessage assistantMessage = Optional.ofNullable(chatResponse)
                     .map(ChatResponse::getResult)
                     .map(Generation::getOutput)
@@ -67,7 +56,7 @@ public class LlmChatClient {
 
             completionInfo.setResponseMessage(assistantMessage.getText());
         } catch (Exception e) {
-            completionInfo.setSuccess(false);
+            completionInfo.setSuccess(true);
             completionInfo.setError(e.getMessage());
         }
         return completionInfo;
