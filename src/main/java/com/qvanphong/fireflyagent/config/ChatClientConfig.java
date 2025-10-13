@@ -3,8 +3,6 @@ package com.qvanphong.fireflyagent.config;
 import com.qvanphong.fireflyagent.utils.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,17 +19,15 @@ public class ChatClientConfig {
 
     @Bean(name = "llmSystemPrompt")
     public String llmSystemPrompt() throws IOException {
-        return FileUtils.readFileContent(StringUtils.defaultIfBlank(systemPromptPath, "classpath:default_prompt.txt"));
+        return FileUtils.readFileContent(StringUtils.defaultIfBlank(systemPromptPath, "classpath:system_prompt_v1.txt"));
     }
 
     @Bean
     public ChatClient chatClient(ChatClient.Builder chatClientBuilder,
-                                 ToolCallbackProvider tools,
-                                 ChatMemory chatMemory) {
+                                 ToolCallbackProvider tools) {
 
         return chatClientBuilder
                 .defaultToolCallbacks(tools)
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .build();
     }
 
