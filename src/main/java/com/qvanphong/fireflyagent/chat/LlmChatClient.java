@@ -30,7 +30,7 @@ import java.util.*;
 @Slf4j
 public class LlmChatClient {
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private final int MAX_TOOL_CALL = 10;
+    private final int MAX_TOOL_CALL = 25;
 
     private final ChatClient chatClient;
     private final ToolCallingManager toolCallingManager;
@@ -56,12 +56,16 @@ public class LlmChatClient {
             completionInfo.setResponseMessage(assistantMessage.getText());
             globalChatMemory.add(botOwnerId, assistantMessage);
         } catch (Exception e) {
-            completionInfo.setSuccess(true);
+            completionInfo.setSuccess(false);
             completionInfo.setError(e.getMessage());
             globalChatMemory.add(botOwnerId, AssistantMessage.builder().content("LLM failed to process or no response.").build());
         }
 
         return completionInfo;
+    }
+
+    public void resetMemory(String userId) {
+        globalChatMemory.clear(userId);
     }
 
     private ChatResponse executeToolsIfNeeded(ChatResponse chatResponse, Prompt inputPrompt, CompletionInfo completionInfo) {
